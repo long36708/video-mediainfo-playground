@@ -1,15 +1,15 @@
 import mediaInfoFactory, {
+  type AudioTrack,
+  type FormatType,
+  type GeneralTrack,
+  type ImageTrack,
   type MediaInfo,
   type MediaInfoResult,
-  type Track,
-  type GeneralTrack,
-  type VideoTrack,
-  type AudioTrack,
-  type TextTrack,
-  type ImageTrack,
   type MenuTrack,
   type OtherTrack,
-  type FormatType,
+  type TextTrack,
+  type Track,
+  type VideoTrack,
 } from 'mediainfo.js'
 
 export type {
@@ -38,6 +38,9 @@ export interface GetMediaInfoOptions {
 /** 缓存的 MediaInfo 实例 */
 let cachedMediaInfo: MediaInfo<FormatType> | null = null
 
+/** WASM 文件的 CDN 路径 */
+const WASM_CDN_URL = 'https://cdn.jsdelivr.net/npm/mediainfo.js@0.3.7/dist/'
+
 /**
  * 获取或创建 MediaInfo 实例（单例模式）
  */
@@ -47,13 +50,22 @@ async function getMediaInfo(options: GetMediaInfoOptions = {}): Promise<MediaInf
     return cachedMediaInfo
   }
 
-  const { format = 'object', full = false, coverData = false, chunkSize } = options
+  const {format = 'object', full = false, coverData = false, chunkSize = 256 * 1024} = options
 
   cachedMediaInfo = await mediaInfoFactory({
     format,
     full,
     coverData,
     chunkSize,
+    locateFile: (path: string) => {
+      // 使用 CDN 加载 WASM 文件
+      if (path.endsWith('.wasm')) {
+        // return WASM_CDN_URL + path
+        return `${import.meta.env.BASE_URL}${path}`
+        // return `${import.meta.env.BASE_URL}MediaInfoWasm-26.01.wasm`
+      }
+      return path
+    },
   })
 
   return cachedMediaInfo
@@ -70,8 +82,7 @@ export async function getMediaInfoFromFile(
   options: GetMediaInfoOptions = {},
 ): Promise<MediaInfoResult> {
   const mediainfo = await getMediaInfo(options)
-
-  if(!mediainfo) {
+  if (!mediainfo) {
     throw new Error('MediaInfo instance not found')
   }
 
@@ -90,6 +101,7 @@ export async function getMediaInfoFromFile(
 /**
  * 从 URL 获取媒体信息
  * @param url 媒体文件 URL
+ * https://192.168.179.1:3000/videos/avc1_18s.mp4
  * @param options 配置选项
  * @returns 媒体信息
  */
@@ -97,7 +109,7 @@ export async function getMediaInfoFromUrl(
   url: string,
   options: GetMediaInfoOptions = {},
 ): Promise<MediaInfoResult> {
-  const response = await fetch(url, { method: 'HEAD' })
+  const response = await fetch(url, {method: 'HEAD'})
   if (!response.ok) {
     throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`)
   }
@@ -115,12 +127,12 @@ export async function getMediaInfoFromUrl(
     throw new Error('MediaInfo instance not found')
   }
 
- const getSize = () => fileSize
+  const getSize = () => fileSize
 
   const readChunk = async (size: number, offset: number): Promise<Uint8Array> => {
     const end = Math.min(offset + size - 1, fileSize - 1)
     const rangeResponse = await fetch(url, {
-      headers: { Range: `bytes=${offset}-${end}` },
+      headers: {Range: `bytes=${offset}-${end}`},
     })
 
     if (!rangeResponse.ok) {

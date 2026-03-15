@@ -10,6 +10,7 @@
     "test:unit": "vitest",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
+    "mediainfo": "node ./node_modules/mediainfo.js/dist/esm/cli.js --format JSON ./public/avc1_18s.mp4",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
