@@ -1,1 +1,6 @@
 * text=auto eol=lf
+
+# Git LFS 追踪大文件
+*.wasm filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.flv filter=lfs diff=lfs merge=lfs -text
