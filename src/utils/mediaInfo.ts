@@ -130,6 +130,11 @@ export async function getMediaInfoFromUrl(
   const getSize = () => fileSize
 
   const readChunk = async (size: number, offset: number): Promise<Uint8Array> => {
+    // 边界检查：如果 offset 超出文件大小，返回空数组
+    if (offset >= fileSize) {
+      return new Uint8Array(0)
+    }
+
     const end = Math.min(offset + size - 1, fileSize - 1)
     const rangeResponse = await fetch(url, {
       headers: {Range: `bytes=${offset}-${end}`},
