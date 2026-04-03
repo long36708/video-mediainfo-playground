@@ -24,6 +24,9 @@ const copied = ref(false)
 const jsonCollapsed = ref(true)
 const isDragOver = ref(false)
 
+// 性能统计
+const parseTime = ref(0) // 总耗时（毫秒）
+
 const generalInfo = ref<GeneralTrack | undefined>()
 const videoTracks = ref<VideoTrack[]>([])
 const audioTracks = ref<AudioTrack[]>([])
@@ -45,6 +48,7 @@ async function handleFileSelect(event: Event) {
 }
 
 async function parseFile(file: File) {
+  const startTime = performance.now()
   loading.value = true
   error.value = ''
   result.value = null
@@ -52,6 +56,7 @@ async function parseFile(file: File) {
   try {
     result.value = await getMediaInfoFromFile(file)
     extractInfo()
+    parseTime.value = Math.round(performance.now() - startTime)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '解析失败'
   } finally {
@@ -61,12 +66,14 @@ async function parseFile(file: File) {
 
 async function handleUrlSubmit() {
   if (!urlInput.value.trim()) return
+  const startTime = performance.now()
   loading.value = true
   error.value = ''
   result.value = null
   try {
     result.value = await getMediaInfoFromUrl(urlInput.value.trim())
     extractInfo()
+    parseTime.value = Math.round(performance.now() - startTime)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '解析失败'
   } finally {
@@ -400,6 +407,10 @@ async function copyToClipboard(text: string) {
             <div class="info-item">
               <span class="label">编码应用</span>
               <span class="value">{{ generalInfo.Encoded_Library || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">解析耗时</span>
+              <span class="value performance-time">{{ parseTime }} ms</span>
             </div>
           </div>
         </section>
@@ -1122,6 +1133,18 @@ async function copyToClipboard(text: string) {
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.performance-time {
+  display: inline-block;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.1);
 }
 
 /* ===== Track Card ===== */
