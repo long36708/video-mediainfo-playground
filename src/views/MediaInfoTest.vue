@@ -199,6 +199,88 @@ async function copyToClipboard(text: string) {
             <span>{{ error }}</span>
           </div>
         </transition>
+
+        <!-- 能力说明 -->
+        <div class="capabilities-info">
+          <div class="info-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span>支持格式</span>
+          </div>
+          
+          <!-- 封装格式 -->
+          <div class="capability-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="10" y1="16" x2="10" y2="16"/>
+              </svg>
+              <span>封装格式</span>
+            </div>
+            <div class="capability-tags">
+              <span class="tag blue">MP4</span>
+              <span class="tag blue">MKV</span>
+              <span class="tag blue">AVI</span>
+              <span class="tag blue">MOV</span>
+              <span class="tag blue">MPEG-TS</span>
+              <span class="tag blue">MPEG-PS</span>
+              <span class="tag blue">WMV</span>
+              <span class="tag blue">FLV</span>
+              <span class="tag blue">MXF</span>
+              <span class="tag blue">GXF</span>
+              <span class="tag blue">LXF</span>
+              <span class="tag blue">WebM</span>
+            </div>
+          </div>
+          
+          <!-- 视频编码 -->
+          <div class="capability-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <span>视频编码</span>
+            </div>
+            <div class="capability-tags">
+              <span class="tag green">H.264/AVC</span>
+              <span class="tag green">H.265/HEVC</span>
+              <span class="tag green">MPEG-2</span>
+              <span class="tag green">MPEG-4</span>
+              <span class="tag green">DivX</span>
+              <span class="tag green">XviD</span>
+              <span class="tag green">VP9</span>
+              <span class="tag green">FFV1</span>
+            </div>
+          </div>
+          
+          <!-- 音频编码 -->
+          <div class="capability-section">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18V5l12-2v13"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="16" r="3"/>
+              </svg>
+              <span>音频编码</span>
+            </div>
+            <div class="capability-tags">
+              <span class="tag purple">AAC</span>
+              <span class="tag purple">MP3</span>
+              <span class="tag purple">AC-3</span>
+              <span class="tag purple">E-AC-3</span>
+              <span class="tag purple">DTS</span>
+              <span class="tag purple">FLAC</span>
+              <span class="tag purple">PCM</span>
+              <span class="tag purple">Dolby E</span>
+            </div>
+          </div>
+          
+          <p class="capability-desc">支持 99% 常见音视频格式，纯客户端解析保护隐私</p>
+        </div>
       </div>
     </aside>
 
@@ -219,6 +301,67 @@ async function copyToClipboard(text: string) {
         </svg>
         <h3>等待解析</h3>
         <p>选择本地文件或输入 URL 开始</p>
+        
+        <div class="capabilities-showcase">
+          <h4>可探测的参数</h4>
+          <div class="param-grid">
+            <div class="param-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="10" y1="16" x2="10" y2="16"/>
+              </svg>
+              <span>容器格式</span>
+            </div>
+            <div class="param-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <span>视频编码</span>
+            </div>
+            <div class="param-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18V5l12-2v13"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="16" r="3"/>
+              </svg>
+              <span>音频编码</span>
+            </div>
+            <div class="param-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>时长/帧数</span>
+            </div>
+            <div class="param-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+              </svg>
+              <span>文件大小</span>
+            </div>
+            <div class="param-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="20" rx="2" ry="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+              <span>分辨率</span>
+            </div>
+            <div class="param-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              <span>帧率/比特率</span>
+            </div>
+            <div class="param-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12h5l3 5 4-10 3 5h5"/>
+              </svg>
+              <span>采样率</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Results -->
@@ -459,6 +602,126 @@ async function copyToClipboard(text: string) {
   gap: 20px;
 }
 
+/* ===== 能力说明 ===== */
+.capabilities-info {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+.info-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.info-badge svg {
+  width: 18px;
+  height: 18px;
+  color: #a78bfa;
+}
+
+.info-badge span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.capability-section {
+  margin-bottom: 14px;
+}
+
+.capability-section:last-child {
+  margin-bottom: 10px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.section-title svg {
+  width: 16px;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.section-title span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.capability-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tag {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.73rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tag:hover {
+  transform: translateY(-1px);
+}
+
+/* 封装格式 - 蓝色 */
+.tag.blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.tag.blue:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+/* 视频编码 - 绿色 */
+.tag.green {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.tag.green:hover {
+  background: rgba(34, 197, 94, 0.25);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+/* 音频编码 - 紫色 */
+.tag.purple {
+  background: rgba(167, 139, 250, 0.15);
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.tag.purple:hover {
+  background: rgba(167, 139, 250, 0.25);
+  border-color: rgba(167, 139, 250, 0.5);
+}
+
+.capability-desc {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* ===== 拖拽区域 ===== */
 .drop-zone {
   position: relative;
@@ -691,6 +954,59 @@ async function copyToClipboard(text: string) {
   font-size: 0.88rem;
   color: #c4c8cf;
   margin: 0;
+}
+
+/* ===== 能力展示 ===== */
+.capabilities-showcase {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.capabilities-showcase h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin: 0 0 16px;
+  letter-spacing: 0.05em;
+}
+
+.param-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.param-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.param-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(167, 139, 250, 0.3);
+  transform: translateY(-2px);
+}
+
+.param-item svg {
+  width: 22px;
+  height: 22px;
+  color: #a78bfa;
+}
+
+.param-item span {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  font-weight: 500;
 }
 
 /* ===== Info Section ===== */
@@ -980,6 +1296,16 @@ async function copyToClipboard(text: string) {
 
   .result-panel {
     padding: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .param-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .capability-tags {
+    justify-content: center;
   }
 }
 </style>
