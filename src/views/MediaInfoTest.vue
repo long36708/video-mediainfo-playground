@@ -291,6 +291,10 @@ async function copyToClipboard(text: string) {
                 <span class="value">{{ track.FrameRate?.toFixed(2) || 'N/A' }} fps</span>
               </div>
               <div class="info-item">
+                <span class="label">总帧数</span>
+                <span class="value">{{ track.FrameCount ? Number(track.FrameCount).toLocaleString() : 'N/A' }}</span>
+              </div>
+              <div class="info-item">
                 <span class="label">比特率</span>
                 <span class="value">{{ formatBitRate(track.BitRate) }}</span>
               </div>
