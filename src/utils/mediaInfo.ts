@@ -95,7 +95,7 @@ export async function getMediaInfoFromFile(
   }
 
   const result = await mediainfo.analyzeData(getSize, readChunk)
-  return result
+  return result as MediaInfoResult
 }
 
 /**
@@ -149,7 +149,7 @@ export async function getMediaInfoFromUrl(
   }
 
   const result = await mediainfo.analyzeData(getSize, readChunk)
-  return result
+  return result as MediaInfoResult
 }
 
 /**
@@ -175,7 +175,7 @@ export async function getMediaInfoFromBuffer(
   }
 
   const result = await mediainfo.analyzeData(getSize, readChunk)
-  return result
+  return result as MediaInfoResult
 }
 
 /**
@@ -202,7 +202,7 @@ export async function getMediaInfoFromBlob(
   }
 
   const result = await mediainfo.analyzeData(getSize, readChunk)
-  return result
+  return result as MediaInfoResult
 }
 
 /**

@@ -21,8 +21,10 @@ const loading = ref(false)
 const error = ref('')
 const result = ref<MediaInfoResult | null>(null)
 const copied = ref(false)
-const jsonCollapsed = ref(true)
 const isDragOver = ref(false)
+const infoViewTab = ref<'structured' | 'json'>('structured')
+const searchQuery = ref('')
+const expandedTracks = ref<Set<number>>(new Set())
 
 // 性能统计
 const parseTime = ref(0) // 总耗时（毫秒）
@@ -31,7 +33,67 @@ const generalInfo = ref<GeneralTrack | undefined>()
 const videoTracks = ref<VideoTrack[]>([])
 const audioTracks = ref<AudioTrack[]>([])
 
+// 完整信息 - 所有轨道（原始数据）
+interface TrackGroup {
+  type: string
+  color: string
+  tracks: Record<string, unknown>[]
+}
+
+const allTrackGroups = ref<TrackGroup[]>([])
+const allTrackCount = ref(0)
+const allFieldCount = ref(0)
+
+const trackTypeOrder = ['General', 'Video', 'Audio', 'Text', 'Image', 'Menu', 'Other']
+
+const typeColorMap: Record<string, string> = {
+  General: '#6d28d9',
+  Video: '#059669',
+  Audio: '#7c3aed',
+  Text: '#d97706',
+  Image: '#2563eb',
+  Menu: '#4b5563',
+  Other: '#6b7280',
+}
+
 const hasResult = computed(() => !!result.value && !!generalInfo.value)
+
+// 所有轨道扁平列表（用于 indexOf 查找）
+const allTracksFlat = computed(() => allTrackGroups.value.flatMap(g => g.tracks))
+
+const filteredTrackGroups = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return allTrackGroups.value
+  return allTrackGroups.value
+    .map(group => ({
+      ...group,
+      tracks: group.tracks.filter(track =>
+        Object.entries(track).some(([key, value]) =>
+          key.toLowerCase().includes(query) || String(value).toLowerCase().includes(query),
+        ),
+      ),
+    }))
+    .filter(group => group.tracks.length > 0)
+})
+
+function getTrackEntries(track: Record<string, unknown>) {
+  return Object.entries(track).filter(([key]) => key !== '@type')
+}
+
+function toggleTrack(index: number) {
+  const next = new Set(expandedTracks.value)
+  if (next.has(index)) next.delete(index)
+  else next.add(index)
+  expandedTracks.value = next
+}
+
+function isTrackExpanded(index: number) {
+  return expandedTracks.value.has(index)
+}
+
+function getTrackIndex(track: Record<string, unknown>) {
+  return allTracksFlat.value.indexOf(track)
+}
 
 const fileName = computed(() => {
   if (!generalInfo.value?.FileName) return ''
@@ -53,6 +115,11 @@ async function parseFile(file: File) {
   error.value = ''
   result.value = null
   isDragOver.value = false
+  allTrackGroups.value = []
+  allTrackCount.value = 0
+  allFieldCount.value = 0
+  expandedTracks.value = new Set()
+  searchQuery.value = ''
   try {
     result.value = await getMediaInfoFromFile(file)
     extractInfo()
@@ -70,6 +137,11 @@ async function handleUrlSubmit() {
   loading.value = true
   error.value = ''
   result.value = null
+  allTrackGroups.value = []
+  allTrackCount.value = 0
+  allFieldCount.value = 0
+  expandedTracks.value = new Set()
+  searchQuery.value = ''
   try {
     result.value = await getMediaInfoFromUrl(urlInput.value.trim())
     extractInfo()
@@ -86,6 +158,35 @@ function extractInfo() {
   generalInfo.value = getGeneralTrack(result.value)
   videoTracks.value = getVideoTracks(result.value)
   audioTracks.value = getAudioTracks(result.value)
+
+  // 提取所有轨道用于完整信息展示
+  const tracks = result.value.media?.track
+  if (Array.isArray(tracks)) {
+    const map = new Map<string, Record<string, unknown>[]>()
+    for (const track of tracks) {
+      const type = (track as Record<string, unknown>)['@type'] as string || 'Unknown'
+      if (!map.has(type)) map.set(type, [])
+      map.get(type)!.push(track as Record<string, unknown>)
+    }
+
+    const groups: TrackGroup[] = []
+    for (const [type, typeTracks] of map) {
+      groups.push({ type, color: typeColorMap[type] || '#6b7280', tracks: typeTracks })
+    }
+    groups.sort((a, b) => {
+      const ai = trackTypeOrder.indexOf(a.type)
+      const bi = trackTypeOrder.indexOf(b.type)
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+    })
+
+    allTrackGroups.value = groups
+    allTrackCount.value = tracks.length
+    allFieldCount.value = tracks.reduce((sum, t) => sum + Object.keys(t).length, 0)
+  } else {
+    allTrackGroups.value = []
+    allTrackCount.value = 0
+    allFieldCount.value = 0
+  }
 }
 
 function openFilePicker() {
@@ -106,10 +207,6 @@ function handleDrop(e: DragEvent) {
   isDragOver.value = false
   const file = e.dataTransfer?.files?.[0]
   if (file) parseFile(file)
-}
-
-function toggleJson() {
-  jsonCollapsed.value = !jsonCollapsed.value
 }
 
 async function copyToClipboard(text: string) {
@@ -390,23 +487,23 @@ async function copyToClipboard(text: string) {
           <div class="info-grid">
             <div class="info-item">
               <span class="label">格式</span>
-              <span class="value format-badge">{{ generalInfo.Format || 'N/A' }}</span>
+              <span class="value format-badge">{{ generalInfo?.Format || 'N/A' }}</span>
             </div>
             <div class="info-item">
               <span class="label">文件大小</span>
-              <span class="value">{{ formatFileSize(generalInfo.FileSize) }}</span>
+              <span class="value">{{ formatFileSize(generalInfo?.FileSize) }}</span>
             </div>
             <div class="info-item">
               <span class="label">时长</span>
-              <span class="value">{{ formatDuration(generalInfo.Duration) }}</span>
+              <span class="value">{{ formatDuration(generalInfo?.Duration) }}</span>
             </div>
             <div class="info-item">
               <span class="label">总比特率</span>
-              <span class="value">{{ formatBitRate(generalInfo.OverallBitRate) }}</span>
+              <span class="value">{{ formatBitRate(generalInfo?.OverallBitRate) }}</span>
             </div>
             <div class="info-item">
               <span class="label">编码应用</span>
-              <span class="value">{{ generalInfo.Encoded_Library || 'N/A' }}</span>
+              <span class="value">{{ generalInfo?.Encoded_Library || 'N/A' }}</span>
             </div>
             <div class="info-item">
               <span class="label">解析耗时</span>
@@ -518,31 +615,147 @@ async function copyToClipboard(text: string) {
           </div>
         </section>
 
-        <!-- 原始 JSON -->
-        <section class="info-section json-section">
-          <div class="json-toggle" @click="toggleJson">
-            <svg class="collapse-icon" :class="{ rotated: !jsonCollapsed }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-            <h3>原始 JSON</h3>
+        <!-- 完整信息 -->
+        <section class="info-section full-info-section">
+          <div class="full-info-header">
+            <div class="section-header" style="margin-bottom: 0;">
+              <div class="section-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <div>
+                <h3>完整信息</h3>
+                <p class="section-desc">{{ allTrackCount }} 个轨道，{{ allFieldCount }} 个字段</p>
+              </div>
+            </div>
+            <div class="header-actions">
+              <button
+                class="copy-btn"
+                :class="{ copied }"
+                @click="copyToClipboard(JSON.stringify(result, null, 2))"
+              >
+                <svg v-if="!copied" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {{ copied ? '已复制' : '复制 JSON' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab 切换 -->
+          <div class="view-tabs">
             <button
-              class="copy-btn"
-              :class="{ copied }"
-              @click.stop="copyToClipboard(JSON.stringify(result, null, 2))"
+              class="view-tab"
+              :class="{ active: infoViewTab === 'structured' }"
+              @click="infoViewTab = 'structured'"
             >
-              <svg v-if="!copied" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
               </svg>
-              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
+              结构化
+            </button>
+            <button
+              class="view-tab"
+              :class="{ active: infoViewTab === 'json' }"
+              @click="infoViewTab = 'json'"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"/>
+                <polyline points="8 6 2 12 8 18"/>
               </svg>
-              {{ copied ? '已复制' : '复制' }}
+              JSON
             </button>
           </div>
-          <transition name="collapse">
-            <pre v-if="!jsonCollapsed" class="json-content">{{ JSON.stringify(result, null, 2) }}</pre>
-          </transition>
+
+          <!-- 结构化视图 -->
+          <div v-if="infoViewTab === 'structured'" class="structured-view">
+            <!-- 搜索 -->
+            <div class="search-bar">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="搜索字段名或值..."
+                class="search-input"
+              />
+              <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- 轨道类型分组 -->
+            <div v-if="filteredTrackGroups.length === 0" class="no-results">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+              <span>没有匹配的字段</span>
+            </div>
+
+            <div v-for="group in filteredTrackGroups" :key="group.type" class="track-group">
+              <div class="track-group-header">
+                <span class="track-type-dot" :style="{ background: group.color }"></span>
+                <span class="track-type-label">{{ group.type }}</span>
+                <span class="track-type-count">{{ group.tracks.length }}</span>
+              </div>
+
+              <div v-for="(track, tIdx) in group.tracks" :key="tIdx" class="track-detail-card">
+                <div class="track-detail-toggle" @click="toggleTrack(getTrackIndex(track as Record<string, unknown>))">
+                  <svg
+                    class="toggle-arrow"
+                    :class="{ expanded: isTrackExpanded(getTrackIndex(track as Record<string, unknown>)) }"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  >
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                  <span class="track-detail-title">
+                    {{ group.type }} #{{ tIdx + 1 }}
+                    <span v-if="(track as Record<string, unknown>).Format" class="track-format-tag" :style="{ color: group.color, borderColor: group.color + '33', background: group.color + '0d' }">
+                      {{ (track as Record<string, unknown>).Format }}
+                    </span>
+                  </span>
+                  <span class="field-count">{{ getTrackEntries(track as Record<string, unknown>).length }} 个字段</span>
+                </div>
+
+                <transition name="slide-fade">
+                  <div v-if="isTrackExpanded(getTrackIndex(track as Record<string, unknown>))" class="track-fields">
+                    <div
+                      v-for="([key, value], fIdx) in getTrackEntries(track as Record<string, unknown>)"
+                      :key="fIdx"
+                      class="field-row"
+                    >
+                      <span class="field-key" :title="key">{{ key }}</span>
+                      <span class="field-value" :title="String(value)">{{ value ?? 'N/A' }}</span>
+                    </div>
+                  </div>
+                </transition>
+              </div>
+            </div>
+          </div>
+
+          <!-- JSON 原始视图 -->
+          <div v-else class="json-view">
+            <pre class="json-content">{{ JSON.stringify(result, null, 2) }}</pre>
+          </div>
         </section>
       </template>
     </main>
@@ -1171,45 +1384,6 @@ async function copyToClipboard(text: string) {
   border-bottom: 1px solid #f0f1f5;
 }
 
-/* ===== JSON Section ===== */
-.json-section {
-  padding: 0;
-  overflow: hidden;
-}
-
-.json-toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 18px 24px;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.15s ease;
-}
-
-.json-toggle:hover {
-  background: #fafbfc;
-}
-
-.json-toggle h3 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0;
-  flex: 1;
-}
-
-.collapse-icon {
-  width: 16px;
-  height: 16px;
-  color: #9ca3af;
-  transition: transform 0.25s ease;
-}
-
-.collapse-icon.rotated {
-  transform: rotate(180deg);
-}
-
 .copy-btn {
   display: flex;
   align-items: center;
@@ -1253,6 +1427,330 @@ async function copyToClipboard(text: string) {
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 }
 
+/* ===== 完整信息区域 ===== */
+.full-info-section {
+  padding: 0;
+  overflow: hidden;
+}
+
+.full-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Tab 切换 */
+.view-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 24px;
+  padding: 3px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.view-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-tab svg {
+  width: 14px;
+  height: 14px;
+}
+
+.view-tab:hover {
+  color: #374151;
+}
+
+.view-tab.active {
+  background: #fff;
+  color: #1a1a2e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* 结构化视图 */
+.structured-view {
+  padding: 0 24px 20px;
+}
+
+/* 搜索栏 */
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 9px 36px 9px 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  color: #1a1a2e;
+  background: #fff;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+}
+
+.search-input::placeholder {
+  color: #c4c8cf;
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.search-clear:hover {
+  background: #e5e7eb;
+}
+
+.search-clear svg {
+  width: 12px;
+  height: 12px;
+  color: #6b7280;
+}
+
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 0;
+  color: #9ca3af;
+}
+
+.no-results svg {
+  width: 32px;
+  height: 32px;
+}
+
+.no-results span {
+  font-size: 0.85rem;
+}
+
+/* 轨道类型分组 */
+.track-group {
+  margin-bottom: 16px;
+}
+
+.track-group:last-child {
+  margin-bottom: 0;
+}
+
+.track-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f1f5;
+}
+
+.track-type-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.track-type-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.track-type-count {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 1px 7px;
+  border-radius: 8px;
+}
+
+/* 轨道详情卡片 */
+.track-detail-card {
+  background: #fafbfe;
+  border: 1px solid #f0f1f5;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.track-detail-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.track-detail-toggle:hover {
+  background: #f5f6fa;
+}
+
+.toggle-arrow {
+  width: 14px;
+  height: 14px;
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.toggle-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.track-detail-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.track-format-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.field-count {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+/* 字段列表 */
+.track-fields {
+  border-top: 1px solid #f0f1f5;
+}
+
+.field-row {
+  display: flex;
+  padding: 6px 14px;
+  transition: background 0.1s ease;
+  border-bottom: 1px solid #f8f9fc;
+}
+
+.field-row:last-child {
+  border-bottom: none;
+}
+
+.field-row:hover {
+  background: #f0f1f6;
+}
+
+.field-row:nth-child(even) {
+  background: #fcfcfe;
+}
+
+.field-row:nth-child(even):hover {
+  background: #f0f1f6;
+}
+
+.field-key {
+  width: 200px;
+  min-width: 200px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12px;
+  flex-shrink: 0;
+}
+
+.field-value {
+  flex: 1;
+  font-size: 0.78rem;
+  color: #1a1a2e;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* JSON 视图 */
+.json-view {
+  padding: 0 24px 20px;
+}
+
+.json-view .json-content {
+  margin: 0;
+}
+
+/* slide-fade transition */
+.slide-fade-enter-active {
+  transition: all 0.25s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  max-height: 0;
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
 /* ===== Transitions ===== */
 .fade-enter-active,
 .fade-leave-active {
@@ -1261,25 +1759,6 @@ async function copyToClipboard(text: string) {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-.collapse-enter-active,
-.collapse-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-.collapse-enter-from,
-.collapse-leave-to {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  margin: 0 12px;
-  opacity: 0;
-}
-.collapse-enter-to,
-.collapse-leave-from {
-  max-height: 500px;
-  opacity: 1;
 }
 
 /* ===== Scrollbar ===== */
