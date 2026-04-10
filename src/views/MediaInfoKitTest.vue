@@ -756,13 +756,11 @@ async function copyToClipboard(text: string) {
                     <span v-if="(track as Record<string, unknown>).Format" class="track-format-tag"
                           :style="{ color: group.color, borderColor: group.color + '33', background: group.color + '0d' }">
                       {{
-                        (track as Record
-                      <string, unknown>).Format }}
+                        (track as Record<string, unknown>).Format }}
                     </span>
                   </span>
                   <span class="field-count">{{
-                      getTrackEntries(track as Record
-                    <string, unknown>).length }} 个字段</span>
+                      getTrackEntries(track as Record<string, unknown>).length }} 个字段</span>
                 </div>
 
                 <transition name="slide-fade">
