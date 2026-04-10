@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import {computed, ref} from 'vue'
 import {
-  getMediaInfoFromFile,
-  getMediaInfoFromUrl,
-  getGeneralTrack,
-  getVideoTracks,
-  getAudioTracks,
+  type AudioTrack,
+  formatBitRate,
   formatDuration,
   formatFileSize,
-  formatBitRate,
-  type MediaInfoResult,
   type GeneralTrack,
+  getAudioTracks,
+  getGeneralTrack,
+  getMediaInfoFromFile,
+  getMediaInfoFromUrl,
+  getVideoTracks,
+  type MediaInfoResult,
   type VideoTrack,
-  type AudioTrack,
 } from 'mediainfo-kit'
 
 const fileInput = ref<HTMLInputElement>()
@@ -121,7 +121,7 @@ async function parseFile(file: File) {
   expandedTracks.value = new Set()
   searchQuery.value = ''
   try {
-    result.value = await getMediaInfoFromFile(file)
+    result.value = await getMediaInfoFromFile(file, {full: true})
     extractInfo()
     parseTime.value = Math.round(performance.now() - startTime)
   } catch (e) {
@@ -171,7 +171,7 @@ function extractInfo() {
 
     const groups: TrackGroup[] = []
     for (const [type, typeTracks] of map) {
-      groups.push({ type, color: typeColorMap[type] || '#6b7280', tracks: typeTracks })
+      groups.push({type, color: typeColorMap[type] || '#6b7280', tracks: typeTracks})
     }
     groups.sort((a, b) => {
       const ai = trackTypeOrder.indexOf(a.type)
@@ -226,7 +226,8 @@ async function copyToClipboard(text: string) {
     <aside class="input-panel">
       <div class="panel-header">
         <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="2" width="20" height="20" rx="3"/>
             <path d="M10 8l6 4-6 4V8z"/>
           </svg>
@@ -248,11 +249,12 @@ async function copyToClipboard(text: string) {
           <input
             ref="fileInput"
             type="file"
-            accept="video/*,audio/*"
+            accept="*/*"
             @change="handleFileSelect"
           />
           <div class="drop-zone-content">
-            <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/>
               <line x1="12" y1="3" x2="12" y2="15"/>
@@ -269,7 +271,8 @@ async function copyToClipboard(text: string) {
         <!-- URL 输入 -->
         <div class="url-group">
           <div class="url-input-wrapper">
-            <svg class="url-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="url-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
               <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
             </svg>
@@ -284,7 +287,8 @@ async function copyToClipboard(text: string) {
               :disabled="loading || !urlInput.trim()"
               @click="handleUrlSubmit"
             >
-              <svg v-if="loading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg v-if="loading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2">
                 <path d="M21 12a9 9 0 11-6.219-8.56"/>
               </svg>
               <span v-else>解析</span>
@@ -295,7 +299,8 @@ async function copyToClipboard(text: string) {
         <!-- 状态信息 -->
         <transition name="fade">
           <div v-if="error" class="status error">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <line x1="15" y1="9" x2="9" y2="15"/>
               <line x1="9" y1="9" x2="15" y2="15"/>
@@ -307,14 +312,15 @@ async function copyToClipboard(text: string) {
         <!-- 能力说明 -->
         <div class="capabilities-info">
           <div class="info-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
             <span>支持格式</span>
           </div>
-          
+
           <!-- 封装格式 -->
           <div class="capability-section">
             <div class="section-title">
@@ -339,7 +345,7 @@ async function copyToClipboard(text: string) {
               <span class="tag blue">WebM</span>
             </div>
           </div>
-          
+
           <!-- 视频编码 -->
           <div class="capability-section">
             <div class="section-title">
@@ -360,7 +366,7 @@ async function copyToClipboard(text: string) {
               <span class="tag green">FFV1</span>
             </div>
           </div>
-          
+
           <!-- 音频编码 -->
           <div class="capability-section">
             <div class="section-title">
@@ -382,7 +388,7 @@ async function copyToClipboard(text: string) {
               <span class="tag purple">Dolby E</span>
             </div>
           </div>
-          
+
           <p class="capability-desc">基于 mediainfo-kit 提供更稳定的解析能力和重试机制</p>
         </div>
       </div>
@@ -398,14 +404,15 @@ async function copyToClipboard(text: string) {
 
       <!-- Empty -->
       <div v-else-if="!hasResult" class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+             stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="3" width="20" height="14" rx="2"/>
           <line x1="8" y1="21" x2="16" y2="21"/>
           <line x1="12" y1="17" x2="12" y2="21"/>
         </svg>
         <h3>等待解析</h3>
         <p>选择本地文件或输入 URL 开始</p>
-        
+
         <div class="capabilities-showcase">
           <h4>可探测的参数</h4>
           <div class="param-grid">
@@ -474,7 +481,8 @@ async function copyToClipboard(text: string) {
         <section class="info-section general-section">
           <div class="section-header">
             <div class="section-icon blue">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
@@ -516,7 +524,8 @@ async function copyToClipboard(text: string) {
         <section v-if="videoTracks.length > 0" class="info-section">
           <div class="section-header">
             <div class="section-icon green">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="23 7 16 12 23 17 23 7"/>
                 <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
               </svg>
@@ -543,7 +552,9 @@ async function copyToClipboard(text: string) {
               </div>
               <div class="info-item">
                 <span class="label">总帧数</span>
-                <span class="value">{{ track.FrameCount ? Number(track.FrameCount).toLocaleString() : 'N/A' }}</span>
+                <span class="value">{{
+                    track.FrameCount ? Number(track.FrameCount).toLocaleString() : 'N/A'
+                  }}</span>
               </div>
               <div class="info-item">
                 <span class="label">比特率</span>
@@ -555,7 +566,9 @@ async function copyToClipboard(text: string) {
               </div>
               <div class="info-item">
                 <span class="label">色彩</span>
-                <span class="value">{{ [track.ColorSpace, track.BitDepth ? `${track.BitDepth}bit` : ''].filter(Boolean).join(' / ') || 'N/A' }}</span>
+                <span class="value">{{
+                    [track.ColorSpace, track.BitDepth ? `${track.BitDepth}bit` : ''].filter(Boolean).join(' / ') || 'N/A'
+                  }}</span>
               </div>
               <div class="info-item">
                 <span class="label">编码器</span>
@@ -569,7 +582,8 @@ async function copyToClipboard(text: string) {
         <section v-if="audioTracks.length > 0" class="info-section">
           <div class="section-header">
             <div class="section-icon purple">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 18V5l12-2v13"/>
                 <circle cx="6" cy="18" r="3"/>
                 <circle cx="18" cy="16" r="3"/>
@@ -589,7 +603,9 @@ async function copyToClipboard(text: string) {
               </div>
               <div class="info-item">
                 <span class="label">采样率</span>
-                <span class="value">{{ track.SamplingRate ? `${(track.SamplingRate / 1000).toFixed(1)} kHz` : 'N/A' }}</span>
+                <span class="value">{{
+                    track.SamplingRate ? `${(track.SamplingRate / 1000).toFixed(1)} kHz` : 'N/A'
+                  }}</span>
               </div>
               <div class="info-item">
                 <span class="label">声道</span>
@@ -620,7 +636,8 @@ async function copyToClipboard(text: string) {
           <div class="full-info-header">
             <div class="section-header" style="margin-bottom: 0;">
               <div class="section-icon blue">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
                   <line x1="16" y1="13" x2="8" y2="13"/>
@@ -639,11 +656,13 @@ async function copyToClipboard(text: string) {
                 :class="{ copied }"
                 @click="copyToClipboard(JSON.stringify(result, null, 2))"
               >
-                <svg v-if="!copied" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="!copied" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                   <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
                 </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 {{ copied ? '已复制' : '复制 JSON' }}
@@ -658,7 +677,8 @@ async function copyToClipboard(text: string) {
               :class="{ active: infoViewTab === 'structured' }"
               @click="infoViewTab = 'structured'"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7"/>
                 <rect x="14" y="3" width="7" height="7"/>
                 <rect x="14" y="14" width="7" height="7"/>
@@ -671,7 +691,8 @@ async function copyToClipboard(text: string) {
               :class="{ active: infoViewTab === 'json' }"
               @click="infoViewTab = 'json'"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="16 18 22 12 16 6"/>
                 <polyline points="8 6 2 12 8 18"/>
               </svg>
@@ -683,7 +704,8 @@ async function copyToClipboard(text: string) {
           <div v-if="infoViewTab === 'structured'" class="structured-view">
             <!-- 搜索 -->
             <div class="search-bar">
-              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"/>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
@@ -719,25 +741,33 @@ async function copyToClipboard(text: string) {
               </div>
 
               <div v-for="(track, tIdx) in group.tracks" :key="tIdx" class="track-detail-card">
-                <div class="track-detail-toggle" @click="toggleTrack(getTrackIndex(track as Record<string, unknown>))">
+                <div class="track-detail-toggle"
+                     @click="toggleTrack(getTrackIndex(track as Record<string, unknown>))">
                   <svg
                     class="toggle-arrow"
                     :class="{ expanded: isTrackExpanded(getTrackIndex(track as Record<string, unknown>)) }"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"
                   >
                     <polyline points="9 18 15 12 9 6"/>
                   </svg>
                   <span class="track-detail-title">
                     {{ group.type }} #{{ tIdx + 1 }}
-                    <span v-if="(track as Record<string, unknown>).Format" class="track-format-tag" :style="{ color: group.color, borderColor: group.color + '33', background: group.color + '0d' }">
-                      {{ (track as Record<string, unknown>).Format }}
+                    <span v-if="(track as Record<string, unknown>).Format" class="track-format-tag"
+                          :style="{ color: group.color, borderColor: group.color + '33', background: group.color + '0d' }">
+                      {{
+                        (track as Record
+                      <string, unknown>).Format }}
                     </span>
                   </span>
-                  <span class="field-count">{{ getTrackEntries(track as Record<string, unknown>).length }} 个字段</span>
+                  <span class="field-count">{{
+                      getTrackEntries(track as Record
+                    <string, unknown>).length }} 个字段</span>
                 </div>
 
                 <transition name="slide-fade">
-                  <div v-if="isTrackExpanded(getTrackIndex(track as Record<string, unknown>))" class="track-fields">
+                  <div v-if="isTrackExpanded(getTrackIndex(track as Record<string, unknown>))"
+                       class="track-fields">
                     <div
                       v-for="([key, value], fIdx) in getTrackEntries(track as Record<string, unknown>)"
                       :key="fIdx"
@@ -1141,7 +1171,9 @@ async function copyToClipboard(text: string) {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spin {
@@ -1756,6 +1788,7 @@ async function copyToClipboard(text: string) {
 .fade-leave-active {
   transition: opacity 0.25s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -1805,7 +1838,7 @@ async function copyToClipboard(text: string) {
   .param-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   .capability-tags {
     justify-content: center;
   }

@@ -248,7 +248,7 @@ async function copyToClipboard(text: string) {
           <input
             ref="fileInput"
             type="file"
-            accept="video/*,audio/*"
+            accept="*/*"
             @change="handleFileSelect"
           />
           <div class="drop-zone-content">
@@ -314,7 +314,7 @@ async function copyToClipboard(text: string) {
             </svg>
             <span>支持格式</span>
           </div>
-          
+
           <!-- 封装格式 -->
           <div class="capability-section">
             <div class="section-title">
@@ -339,7 +339,7 @@ async function copyToClipboard(text: string) {
               <span class="tag blue">WebM</span>
             </div>
           </div>
-          
+
           <!-- 视频编码 -->
           <div class="capability-section">
             <div class="section-title">
@@ -360,7 +360,7 @@ async function copyToClipboard(text: string) {
               <span class="tag green">FFV1</span>
             </div>
           </div>
-          
+
           <!-- 音频编码 -->
           <div class="capability-section">
             <div class="section-title">
@@ -382,7 +382,7 @@ async function copyToClipboard(text: string) {
               <span class="tag purple">Dolby E</span>
             </div>
           </div>
-          
+
           <p class="capability-desc">支持 99% 常见音视频格式，纯客户端解析保护隐私</p>
         </div>
       </div>
@@ -405,7 +405,7 @@ async function copyToClipboard(text: string) {
         </svg>
         <h3>等待解析</h3>
         <p>选择本地文件或输入 URL 开始</p>
-        
+
         <div class="capabilities-showcase">
           <h4>可探测的参数</h4>
           <div class="param-grid">
@@ -1805,7 +1805,7 @@ async function copyToClipboard(text: string) {
   .param-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   .capability-tags {
     justify-content: center;
   }
